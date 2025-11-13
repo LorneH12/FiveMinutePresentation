@@ -1,4 +1,4 @@
-// Deck controller with vertical depth transitions + parallax cheesecake mid-ground
+// Deck controller with vertical depth transitions + multi-layer parallax + depth presets
 (function(){
   const deck = document.getElementById('deck');
   const slides = deck ? Array.from(deck.querySelectorAll('.slide')) : [];
@@ -10,13 +10,18 @@
   const notesBtn = document.getElementById('notesBtn');
   const closeNotes = document.getElementById('closeNotes');
   const overviewBtn = document.getElementById('overviewBtn');
-  const parallaxBg = document.getElementById('parallaxBg');
+
+  const parallaxGroup = document.getElementById('parallaxGroup');
+  const parallaxLayers = parallaxGroup
+    ? Array.from(parallaxGroup.querySelectorAll('.parallax-layer'))
+    : [];
 
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
+  const depthButtons = Array.from(document.querySelectorAll('.depth-btn'));
+
   if (!deck || slides.length === 0) {
-    // Fail-safe: if something is really wrong, just stop here.
     return;
   }
 
@@ -24,10 +29,15 @@
   let overview = false;
   let showNotes = false;
 
-  // Initial render without animation
+  // parallax strength (tuned by depth presets)
+  let parallaxStrengthX = 120;
+  let parallaxStrengthY = 80;
+
+  // Initial render
   setInitialSlide(idx);
   updateUI();
   updateGlow();
+  setDepthPreset('deep'); // default
 
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
@@ -58,7 +68,6 @@
     const direction = newIndex > oldIndex ? 'forward' : 'backward';
     idx = newIndex;
 
-    // Update hash for deep-linking
     location.hash = String(idx + 1);
 
     animateTransition(oldIndex, idx, direction);
@@ -72,7 +81,6 @@
     const oldSlide = slides[oldIndex];
     const newSlide = slides[newIndex];
 
-    // Clear previous animation classes
     slides.forEach(s=>{
       s.classList.remove(
         'slide-enter-up','slide-exit-up',
@@ -122,7 +130,7 @@
 
   // Glow position + intensity based on slide index (subtle lighting shift)
   function updateGlow(){
-    if(!parallaxBg) return;
+    if(!parallaxGroup) return;
     const total = Math.max(slides.length - 1, 1);
     const t = idx / total; // 0..1 across deck
 
@@ -130,9 +138,9 @@
     const glowY = 25 + 20 * (1 - t);// ~45% → ~25%
     const strength = 0.35 + 0.25 * Math.sin(t * Math.PI); // 0.35 → 0.6 → 0.35
 
-    parallaxBg.style.setProperty('--glow-x', glowX + '%');
-    parallaxBg.style.setProperty('--glow-y', glowY + '%');
-    parallaxBg.style.setProperty('--glow-strength', String(strength));
+    parallaxGroup.style.setProperty('--glow-x', glowX + '%');
+    parallaxGroup.style.setProperty('--glow-y', glowY + '%');
+    parallaxGroup.style.setProperty('--glow-strength', String(strength));
   }
 
   // NAV BUTTONS
@@ -160,7 +168,6 @@
       if (overviewBtn) overviewBtn.setAttribute('aria-pressed', String(overview));
 
       if(overview){
-        // Show all slides as mini cards, no animations
         slides.forEach(s=>{
           s.classList.add('active');
           s.style.pointerEvents = 'auto';
@@ -177,8 +184,8 @@
     }
   });
 
-  // PARALLAX: move cheesecake subtly with mouse on desktop
-  if(parallaxBg && deck){
+  // MULTI-LAYER PARALLAX: move layers at different speeds with mouse
+  if(parallaxGroup && deck && parallaxLayers.length){
     window.addEventListener('mousemove', (e)=>{
       const rect = deck.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
@@ -186,11 +193,16 @@
       const relX = ((e.clientX - rect.left) / rect.width) - 0.5; // -0.5..0.5
       const relY = ((e.clientY - rect.top) / rect.height) - 0.5;
 
-      const translateX = relX * 24;
-      const translateY = relY * 18;
+      parallaxLayers.forEach(layer=>{
+        const depth = parseFloat(layer.dataset.depth || '0.2'); // 0..1
 
-      parallaxBg.style.transform =
-        `translate3d(${translateX}px, ${translateY}px, 0) scale(1.05)`;
+        // Deep 3D feel: nearer layers move much more
+        const translateX = relX * depth * parallaxStrengthX;
+        const translateY = relY * depth * parallaxStrengthY;
+
+        layer.style.transform =
+          `translate3d(${translateX}px, ${translateY}px, 0)`;
+      });
     }, { passive: true });
   }
 
@@ -254,6 +266,48 @@
       }
     });
   });
+
+  // Depth presets
+  depthButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const preset = btn.dataset.depth || 'medium';
+      setDepthPreset(preset);
+    });
+  });
+
+  function setDepthPreset(preset){
+    const rootStyle = document.documentElement.style;
+
+    if(preset === 'subtle'){
+      parallaxStrengthX = 40;
+      parallaxStrengthY = 30;
+      rootStyle.setProperty('--blur-bg1','10px');
+      rootStyle.setProperty('--blur-layer3','7px');
+      rootStyle.setProperty('--blur-layer2','4px');
+      rootStyle.setProperty('--blur-main','1px');
+    }else if(preset === 'medium'){
+      parallaxStrengthX = 80;
+      parallaxStrengthY = 55;
+      rootStyle.setProperty('--blur-bg1','9px');
+      rootStyle.setProperty('--blur-layer3','6px');
+      rootStyle.setProperty('--blur-layer2','3px');
+      rootStyle.setProperty('--blur-main','0.5px');
+    }else{ // deep
+      parallaxStrengthX = 120;
+      parallaxStrengthY = 80;
+      rootStyle.setProperty('--blur-bg1','8px');
+      rootStyle.setProperty('--blur-layer3','5px');
+      rootStyle.setProperty('--blur-layer2','3px');
+      rootStyle.setProperty('--blur-main','0px');
+    }
+
+    document.documentElement.setAttribute('data-depth-preset', preset);
+
+    depthButtons.forEach(b=>{
+      const isActive = b.dataset.depth === preset;
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
 
   // Ensure active slide looks correct in overview
   const style = document.createElement('style');
