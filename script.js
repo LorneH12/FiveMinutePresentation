@@ -1,4 +1,4 @@
-// 12-slide deck controller with vertical depth transitions (no sideways motion)
+// Deck controller with vertical depth transitions + parallax cheesecake mid-ground
 (function(){
   const deck = document.getElementById('deck');
   const slides = Array.from(deck.querySelectorAll('.slide'));
@@ -10,6 +10,7 @@
   const notesBtn = document.getElementById('notesBtn');
   const closeNotes = document.getElementById('closeNotes');
   const overviewBtn = document.getElementById('overviewBtn');
+  const parallaxBg = document.getElementById('parallaxBg');
 
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
@@ -21,6 +22,7 @@
   // Initial render without animation
   setInitialSlide(idx);
   updateUI();
+  updateGlow();
 
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
@@ -55,6 +57,7 @@
 
     animateTransition(oldIndex, idx, direction);
     updateUI();
+    updateGlow();
   }
 
   function animateTransition(oldIndex, newIndex, direction){
@@ -74,7 +77,6 @@
     });
 
     if(!oldSlide || !newSlide){
-      // Fail-safe: just show new slide
       setInitialSlide(newIndex);
       return;
     }
@@ -112,9 +114,24 @@
     }
   }
 
+  // Glow position + intensity based on slide index (subtle lighting shift)
+  function updateGlow(){
+    if(!parallaxBg) return;
+    const total = Math.max(slides.length - 1, 1);
+    const t = idx / total; // 0..1 across deck
+
+    const glowX = 25 + 50 * t;      // 25% → 75%
+    const glowY = 25 + 20 * (1 - t);// 45% → 25%
+    const strength = 0.35 + 0.25 * Math.sin(t * Math.PI); // 0.35 → 0.6 → 0.35
+
+    parallaxBg.style.setProperty('--glow-x', glowX + '%');
+    parallaxBg.style.setProperty('--glow-y', glowY + '%');
+    parallaxBg.style.setProperty('--glow-strength', strength.toString());
+  }
+
   // NAV BUTTONS
-  prevBtn.addEventListener('click', ()=> goto(idx-1));
-  nextBtn.addEventListener('click', ()=> goto(idx+1));
+  prevBtn.addEventListener('click', ()=> { if(!overview) goto(idx-1); });
+  nextBtn.addEventListener('click', ()=> { if(!overview) goto(idx+1); });
 
   // KEYBOARD CONTROLS
   window.addEventListener('keydown', (e)=>{
@@ -143,7 +160,6 @@
           s.style.pointerEvents = 'auto';
         });
       }else{
-        // Return to current slide full-screen
         setInitialSlide(idx);
         updateUI();
       }
@@ -154,7 +170,21 @@
     }
   });
 
-  // TOUCH / SWIPE (simple)
+  // PARALLAX: move cheesecake subtly with mouse
+  if(parallaxBg){
+    window.addEventListener('mousemove', (e)=>{
+      const rect = deck.getBoundingClientRect();
+      const relX = ((e.clientX - rect.left) / rect.width) - 0.5; // -0.5..0.5
+      const relY = ((e.clientY - rect.top) / rect.height) - 0.5;
+
+      const translateX = relX * 24;  // feel free to tweak
+      const translateY = relY * 18;
+
+      parallaxBg.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(1.05)`;
+    }, { passive: true });
+  }
+
+  // TOUCH / SWIPE (simple; no tilt here to keep it calm on mobile)
   let touchStartX = 0;
   deck.addEventListener('touchstart', (e)=>{
     touchStartX = e.changedTouches[0].clientX;
@@ -179,6 +209,7 @@
     idx = newIndex;
     animateTransition(oldIndex, idx, direction);
     updateUI();
+    updateGlow();
   });
 
   // NOTES
@@ -211,7 +242,7 @@
     });
   });
 
-  // Small CSS tweak to ensure active slide looks correct in overview
+  // Ensure active slide looks correct in overview
   const style = document.createElement('style');
   style.textContent = `
     body.overview .slide.active {
