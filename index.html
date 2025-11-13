@@ -8,157 +8,111 @@
 </head>
 <body>
   <div class="page-shell">
+    <!-- TOP BAR -->
     <header class="top-bar">
       <div class="brand">
-        <span class="brand-tag">5-Minute Presentation</span>
+        <span class="brand-tag">Five Minute Presentation</span>
         <h1>No-Bake Cheesecake for Thanksgiving</h1>
       </div>
       <div class="top-meta">
-        <span class="meta-pill">Live Demo</span>
-        <span class="meta-pill">Built with HTML · CSS · JS</span>
+        <span class="meta-pill">12 slides · ~5 minutes</span>
+        <span class="meta-pill">Built in HTML · CSS · JS</span>
       </div>
     </header>
 
     <main class="presentation-shell">
-      <!-- PARALLAX SCENE (behind everything) -->
-      <div class="parallax-group" id="parallaxGroup" aria-hidden="true">
-        <!-- FAR BACKGROUND WALL -->
-        <div class="parallax-layer layer-bg1" data-depth="0.08">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture9.png"
-            alt=""
-          />
+      <!-- PARALLAX ROOM -->
+      <div class="parallax-group" id="parallaxRoot">
+        <!-- far background – Picture9 -->
+        <div class="parallax-layer layer-bg1" data-depth="0.15">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture9.png" alt="Soft glowing background" />
         </div>
 
-        <!-- MID DEPTH: sugar + caramel burst -->
-        <div class="parallax-layer layer-3" data-depth="0.22">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture7.png"
-            alt=""
-          />
+        <!-- mid depth 1 – sugar swirl (Picture7) -->
+        <div class="parallax-layer layer-3" data-depth="0.35">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture7.png" alt="Sugar swirl" />
         </div>
 
-        <!-- MID DEPTH: sugar swirl -->
-        <div class="parallax-layer layer-2" data-depth="0.34">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture6.png"
-            alt=""
-          />
+        <!-- mid depth 2 – coffee/brown sugar burst (Picture6) -->
+        <div class="parallax-layer layer-2" data-depth="0.55">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture6.png" alt="Brown sugar burst" />
         </div>
 
-        <!-- MAIN FOREGROUND CAKE -->
-        <div class="parallax-layer layer-main" data-depth="0.78">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture2.png"
-            alt="No-bake cheesecake with berries"
-          />
+        <!-- main cake just behind card – Picture2 -->
+        <div class="parallax-layer layer-main" data-depth="0.8">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture2.png" alt="Whole cheesecake" />
         </div>
 
-        <!-- FLOATING OBJECTS -->
-        <div class="parallax-layer obj-milk" data-depth="0.40">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture1.png"
-            alt=""
-          />
+        <!-- floating objects (room feel) -->
+        <div class="parallax-layer obj-milk" data-depth="0.9">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture1.png" alt="Milk splash" />
         </div>
-
-        <div class="parallax-layer obj-whole" data-depth="0.48">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture3.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-whole" data-depth="0.75">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture3.png" alt="Whole cake alt" />
         </div>
-
-        <div class="parallax-layer obj-sauce-a" data-depth="0.56">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture4.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-sauce-a" data-depth="1.0">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture4.png" alt="Berry sauce splash 1" />
         </div>
-
-        <div class="parallax-layer obj-sauce-b" data-depth="0.62">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture5.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-sauce-b" data-depth="1.15">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture5.png" alt="Berry sauce splash 2" />
         </div>
-
-        <div class="parallax-layer obj-sugar" data-depth="0.30">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture10.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-sugar" data-depth="0.6">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture6.png" alt="Sugar burst" />
         </div>
-
-        <div class="parallax-layer obj-slice" data-depth="0.70">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture11.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-slice" data-depth="0.95">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture11.png" alt="Cheesecake slice" />
         </div>
-
-        <div class="parallax-layer obj-blueberry" data-depth="0.66">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture12.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-blueberry" data-depth="1.1">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture10.png" alt="Blueberry" />
         </div>
-
-        <div class="parallax-layer obj-rasp-top" data-depth="0.72">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture13.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-rasp-top" data-depth="1.05">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture13.png" alt="Raspberry top" />
         </div>
-
-        <div class="parallax-layer obj-rasp-side" data-depth="0.76">
-          <img
-            src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture14.png"
-            alt=""
-          />
+        <div class="parallax-layer obj-rasp-side" data-depth="1.2">
+          <img src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Picture14.png" alt="Raspberry angled" />
         </div>
       </div>
 
-      <!-- SLIDE VIEWPORT -->
+      <!-- SLIDES -->
       <section class="slides-shell">
-        <div class="slides-viewport">
-          <!-- 12 slides – each is a fullscreen info block -->
-          <article class="slide is-active" data-index="0">
+        <div class="slides-viewport" id="slidesViewport">
+          <!-- Slide 1 -->
+          <article class="slide is-active" data-slide-index="0">
             <div class="slide-inner">
-              <p class="eyebrow">Slide 1 · Hook</p>
-              <h2>Thanksgiving Dessert in 5 Minutes (of Prep)</h2>
+              <p class="eyebrow">Slide 1 · Opener</p>
+              <h2>Welcome to the 5-Minute Cheesecake Demo</h2>
               <p class="lead">
-                Tonight we’ll build a creamy, no-bake cheesecake that chills
-                while you handle the turkey drama.
+                Tonight we’re building a no-bake cheesecake that feels
+                restaurant-level, but fits into a short, engaging presentation.
               </p>
+              <p>
+                This deck is your “live presentation” version – each slide is a
+                full-screen talking point, supported by a cinematic parallax
+                background that reinforces the theme without distracting from the content.
+              </p>
+            </div>
+          </article>
+
+          <!-- Slide 2 -->
+          <article class="slide" data-slide-index="1">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 2 · Outcome</p>
+              <h2>What You’ll Be Able to Do</h2>
+              <p class="lead">By the end of this mini-session you’ll be able to:</p>
               <ul>
-                <li>Zero oven time</li>
-                <li>15 minutes of hands-on work</li>
-                <li>Overnight chill = next-day “wow” moment</li>
+                <li>Describe the core steps of a no-bake cheesecake.</li>
+                <li>Explain timing and prep so dessert is ready on Thanksgiving.</li>
+                <li>Use a dynamic single-page deck to present a process.</li>
               </ul>
             </div>
           </article>
 
-          <article class="slide" data-index="1">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 2 · Big Picture</p>
-              <h2>The 3 Phases of the Build</h2>
-              <ol>
-                <li>Crust – crunchy, buttery base</li>
-                <li>Filling – smooth, tangy cream cheese</li>
-                <li>Chill &amp; Top – the patience &amp; the flex</li>
-              </ol>
-              <p>
-                Every later slide drops into one of these phases, so your
-                learners always know where they are in the recipe.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="2">
+          <!-- Slide 3 -->
+          <article class="slide" data-slide-index="2">
             <div class="slide-inner">
               <p class="eyebrow">Slide 3 · Ingredients</p>
               <h2>The Core Shopping List</h2>
+
               <div class="two-col">
                 <div>
                   <h3>Crust</h3>
@@ -178,207 +132,187 @@
                   </ul>
                 </div>
               </div>
+              <p class="note">
+                Presenter tip: pause here; check that everyone understands the difference
+                between “prep ahead” items and “same-day” items.
+              </p>
             </div>
           </article>
 
-          <article class="slide" data-index="3">
+          <!-- Slide 4 -->
+          <article class="slide" data-slide-index="3">
             <div class="slide-inner">
-              <p class="eyebrow">Slide 4 · Step 1</p>
-              <h2>Build the Crust (5 Minutes)</h2>
+              <p class="eyebrow">Slide 4 · Gear</p>
+              <h2>Tools You Actually Need</h2>
               <ul>
-                <li>Combine crumbs, sugar, and melted butter.</li>
-                <li>Press firmly into a springform pan.</li>
-                <li>
-                  Chill the crust while you move on — it firms up as you prep
-                  the filling.
-                </li>
+                <li>9-inch springform pan (or pie dish in a pinch)</li>
+                <li>Mixing bowls + rubber spatula</li>
+                <li>Hand mixer or stand mixer</li>
+                <li>Plastic wrap + fridge space</li>
               </ul>
               <p class="note">
-                Trainer tip: ask the room “Too much crust or not enough?” and
-                get quick opinions.
+                Keep the list light – the “I already own this” feeling reduces friction and makes
+                the recipe feel more actionable.
               </p>
             </div>
           </article>
 
-          <article class="slide" data-index="4">
+          <!-- Slide 5 -->
+          <article class="slide" data-slide-index="4">
             <div class="slide-inner">
-              <p class="eyebrow">Slide 5 · Step 2</p>
-              <h2>Whip the Filling</h2>
-              <ul>
-                <li>Cream the cream cheese until completely smooth.</li>
-                <li>Beat in powdered sugar, vanilla, and lemon juice.</li>
-                <li>Whip cold heavy cream to soft peaks, then fold in.</li>
-              </ul>
-              <p>
-                The goal: light and airy, no lumps. This is the “luxury” moment
-                of the recipe.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="5">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 6 · Step 3</p>
-              <h2>Fill, Smooth, and Chill</h2>
-              <ul>
-                <li>Spread the filling over the chilled crust.</li>
-                <li>Smooth the top with an offset spatula or spoon.</li>
-                <li>Cover and refrigerate at least 6 hours (overnight ideal).</li>
-              </ul>
-              <p class="note">
-                Fridge time is where structure and flavor develop — emphasize
-                this to your learners.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="6">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 7 · Toppings</p>
-              <h2>Dress It for Thanksgiving</h2>
-              <ul>
-                <li>Fresh berries + berry coulis (as on screen)</li>
-                <li>Salted caramel and toasted pecans</li>
-                <li>Spiced cranberry sauce swirl</li>
-              </ul>
-              <p>
-                Pick one hero topping so the visual story is clean and
-                photograph-ready.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="7">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 8 · Timing</p>
-              <h2>When to Make What</h2>
-              <ul>
-                <li><strong>Day before:</strong> crust, filling, full chill.</li>
-                <li><strong>Morning of:</strong> slice toppings, prep sauces.</li>
-                <li><strong>Just before serving:</strong> finish decor + photos.</li>
-              </ul>
-              <p>
-                This keeps your oven clear and your headspace calm on the big
-                day.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="8">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 9 · Variations</p>
-              <h2>Flavor Swaps in One Slide</h2>
-              <ul>
-                <li>Pumpkin spice swirl</li>
-                <li>Chocolate cookie crust</li>
-                <li>Lemon curd layer under the berries</li>
-              </ul>
-              <p>
-                Use this as an interactive moment — have participants pitch
-                their own twist.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="9">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 10 · Pitfalls</p>
-              <h2>Common Mistakes to Avoid</h2>
-              <ul>
-                <li>Not softening cream cheese fully</li>
-                <li>Whipping the cream too little (or too much)</li>
-                <li>Rushing the chill time</li>
-              </ul>
-              <p class="note">
-                Each mistake is a teaching story — this is where you fold in
-                real-world examples.
-              </p>
-            </div>
-          </article>
-
-          <article class="slide" data-index="10">
-            <div class="slide-inner">
-              <p class="eyebrow">Slide 11 · Recap</p>
-              <h2>From Empty Counter to Finished Dessert</h2>
+              <p class="eyebrow">Slide 5 · Crust</p>
+              <h2>Step 1 · Build the Crust</h2>
               <ol class="tight">
-                <li>Crust mixed and pressed</li>
-                <li>Filling whipped and folded</li>
-                <li>Cake assembled and chilled</li>
-                <li>Toppings added with intention</li>
+                <li>Combine graham crumbs, sugar, and melted butter.</li>
+                <li>Press firmly into the bottom of the pan.</li>
+                <li>Chill for 10–15 minutes to set.</li>
               </ol>
-              <p>
-                By now the learner can tell the story of the build in four
-                simple beats.
+              <p class="note">
+                Narrate texture cues: “It should feel like wet sand, not soup.”
               </p>
             </div>
           </article>
 
-          <article class="slide" data-index="11">
+          <!-- Slide 6 -->
+          <article class="slide" data-slide-index="5">
             <div class="slide-inner">
-              <p class="eyebrow">Slide 12 · Call to Action</p>
-              <h2>Homework: Teach Someone Else the Recipe</h2>
-              <p class="lead">
-                The best way to lock this in is to walk a friend or family
-                member through the steps.
-              </p>
+              <p class="eyebrow">Slide 6 · Filling</p>
+              <h2>Step 2 · Whip the Filling</h2>
+              <ol class="tight">
+                <li>Beat cream cheese until smooth and fluffy.</li>
+                <li>Add powdered sugar, vanilla, and lemon.</li>
+                <li>Whip heavy cream separately to soft peaks.</li>
+                <li>Fold whipped cream into cream cheese mixture.</li>
+              </ol>
+            </div>
+          </article>
+
+          <!-- Slide 7 -->
+          <article class="slide" data-slide-index="6">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 7 · Assembly</p>
+              <h2>Step 3 · Pour, Smooth, Chill</h2>
               <ul>
-                <li>Send them the ingredient list</li>
-                <li>Screenshot your favorite slide</li>
-                <li>Run the “lesson” in 5 minutes or less</li>
+                <li>Pour filling over the chilled crust.</li>
+                <li>Smooth the top with a spatula.</li>
+                <li>Cover and chill for at least 4 hours – ideally overnight.</li>
               </ul>
+              <p class="note">
+                This is where you emphasize: “We’re trading oven time for fridge time.”
+              </p>
+            </div>
+          </article>
+
+          <!-- Slide 8 -->
+          <article class="slide" data-slide-index="7">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 8 · Toppings</p>
+              <h2>Finishing Moves</h2>
+              <ul>
+                <li>Fresh berries &amp; mint</li>
+                <li>Berry sauce drizzle</li>
+                <li>Chocolate shavings or caramel swirl</li>
+              </ul>
+              <p class="note">
+                Keep the dessert mostly neutral; let guests customize slices at the table.
+              </p>
+            </div>
+          </article>
+
+          <!-- Slide 9 -->
+          <article class="slide" data-slide-index="8">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 9 · Timing</p>
+              <h2>Thanksgiving Timeline</h2>
+              <ul>
+                <li><strong>2 days before:</strong> Shop &amp; clear fridge space.</li>
+                <li><strong>1 day before:</strong> Make crust + filling; chill overnight.</li>
+                <li><strong>Day of:</strong> Add toppings 30–60 minutes before serving.</li>
+              </ul>
+            </div>
+          </article>
+
+          <!-- Slide 10 -->
+          <article class="slide" data-slide-index="9">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 10 · Risks</p>
+              <h2>Common Pitfalls &amp; Fixes</h2>
+              <ul>
+                <li><strong>Lumpy filling:</strong> cream cheese wasn’t softened.</li>
+                <li><strong>Soupy texture:</strong> whipped cream was under-whipped.</li>
+                <li><strong>Soggy crust:</strong> butter ratio too high, or not chilled.</li>
+              </ul>
+            </div>
+          </article>
+
+          <!-- Slide 11 -->
+          <article class="slide" data-slide-index="10">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 11 · Teaching</p>
+              <h2>Why This Deck Works for Training</h2>
+              <ul>
+                <li>Single URL, single page – easy to launch and navigate.</li>
+                <li>Each slide is a clear “beat” in the story, full-screen on any device.</li>
+                <li>Parallax background keeps energy high without overwhelming text.</li>
+              </ul>
+            </div>
+          </article>
+
+          <!-- Slide 12 -->
+          <article class="slide" data-slide-index="11">
+            <div class="slide-inner">
+              <p class="eyebrow">Slide 12 · Close</p>
+              <h2>Now Imagine This as Your Next Training</h2>
+              <p class="lead">
+                Swap “cheesecake” for your real content, plug in your brand visuals,
+                and you have a repeatable pattern for high-impact micro-presentations.
+              </p>
+              <p class="note">
+                Call to action: invite questions, or ask the audience what process they’d
+                like to see in this format next.
+              </p>
             </div>
           </article>
         </div>
 
-        <!-- NAVIGATION + CONTROLS -->
+        <!-- NAV + PARALLAX CONTROLS -->
         <div class="nav-shell">
-          <button class="nav-btn" id="prevBtn" type="button">Prev</button>
-          <div class="slide-dots" id="slideDots" aria-label="Slide navigation"></div>
-          <button class="nav-btn" id="nextBtn" type="button">Next</button>
+          <button class="nav-btn" id="prevSlideBtn">Prev</button>
+          <div class="slide-dots" id="slideDots"></div>
+          <button class="nav-btn" id="nextSlideBtn">Next</button>
         </div>
 
         <div class="parallax-ui">
-          <div class="preset-group" aria-label="Depth presets">
+          <div class="preset-group">
             <span class="preset-label">Depth:</span>
-            <button class="preset-btn is-active" data-preset="subtle" type="button">
-              Subtle
-            </button>
-            <button class="preset-btn" data-preset="medium" type="button">
-              Medium
-            </button>
-            <button class="preset-btn" data-preset="deep" type="button">
-              Deep 3D
-            </button>
+            <button class="preset-btn is-active" data-preset="subtle">Subtle</button>
+            <button class="preset-btn" data-preset="medium">Medium</button>
+            <button class="preset-btn" data-preset="deep">Deep 3D</button>
           </div>
 
           <div class="blur-controls">
-            <span class="preset-label">Blur:</span>
-            <label>
-              BG
-              <input id="blurBg" type="range" min="0" max="10" step="0.5" />
+            <label>BG
+              <input type="range" id="blurBg" min="0" max="8" step="0.5" value="2" />
             </label>
-            <label>
-              Mid 1
-              <input id="blurLayer3" type="range" min="0" max="10" step="0.5" />
+            <label>Mid 1
+              <input type="range" id="blurMid1" min="0" max="8" step="0.5" value="2.5" />
             </label>
-            <label>
-              Mid 2
-              <input id="blurLayer2" type="range" min="0" max="10" step="0.5" />
+            <label>Mid 2
+              <input type="range" id="blurMid2" min="0" max="8" step="0.5" value="1.5" />
             </label>
-            <label>
-              Fore
-              <input id="blurMain" type="range" min="0" max="10" step="0.5" />
+            <label>Fore
+              <input type="range" id="blurFore" min="0" max="4" step="0.25" value="0" />
             </label>
           </div>
         </div>
 
         <p class="hint">
-          Tip: use ← → arrow keys, or tap the Prev / Next buttons. Move your mouse to feel the parallax.
+          Tip: use the ◀ ▶ arrow keys, or tap the Prev / Next buttons. On mobile, swipe left / right.
         </p>
       </section>
     </main>
   </div>
 
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
