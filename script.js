@@ -1,323 +1,229 @@
-// Deck controller with vertical depth transitions + multi-layer parallax + depth presets
-(function(){
-  const deck = document.getElementById('deck');
-  const slides = deck ? Array.from(deck.querySelectorAll('.slide')) : [];
-  const counter = document.getElementById('slideCounter');
-  const titleEl = document.getElementById('slideTitle');
-  const progressEl = document.getElementById('progress');
-  const notesPanel = document.getElementById('notesPanel');
-  const notesBody = document.getElementById('notesBody');
-  const notesBtn = document.getElementById('notesBtn');
-  const closeNotes = document.getElementById('closeNotes');
-  const overviewBtn = document.getElementById('overviewBtn');
+// ------------- SLIDE SETUP -------------
 
-  const parallaxGroup = document.getElementById('parallaxGroup');
-  const parallaxLayers = parallaxGroup
-    ? Array.from(parallaxGroup.querySelectorAll('.parallax-layer'))
-    : [];
+const slides = Array.from(document.querySelectorAll(".slide"));
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const slideDotsContainer = document.getElementById("slideDots");
 
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
+let currentSlideIndex = 0;
 
-  const depthButtons = Array.from(document.querySelectorAll('.depth-btn'));
+// build dots
+slides.forEach((_, index) => {
+  const dot = document.createElement("button");
+  dot.className = "slide-dot";
+  dot.type = "button";
+  dot.dataset.index = String(index);
+  slideDotsContainer.appendChild(dot);
+});
 
-  if (!deck || slides.length === 0) {
-    return;
-  }
+const dots = Array.from(document.querySelectorAll(".slide-dot"));
 
-  let idx = clamp(parseHash(), 0, slides.length - 1);
-  let overview = false;
-  let showNotes = false;
-
-  // parallax strength (tuned by depth presets)
-  let parallaxStrengthX = 120;
-  let parallaxStrengthY = 80;
-
-  // Initial render
-  setInitialSlide(idx);
-  updateUI();
-  updateGlow();
-  setDepthPreset('deep'); // default
-
-  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-
-  function parseHash(){
-    const raw = (location.hash || '#1').replace('#','');
-    const n = parseInt(raw,10);
-    return isNaN(n) ? 0 : (n - 1);
-  }
-
-  function setInitialSlide(i){
-    slides.forEach((s, index)=>{
-      const isActive = index === i;
-      s.classList.toggle('active', isActive);
-      s.classList.remove(
-        'slide-enter-up','slide-exit-up',
-        'slide-enter-down','slide-exit-down',
-        'before','after'
-      );
-      s.style.pointerEvents = isActive ? 'auto' : 'none';
-    });
-  }
-
-  function goto(newIndex){
-    newIndex = clamp(newIndex, 0, slides.length - 1);
-    if(newIndex === idx) return;
-
-    const oldIndex = idx;
-    const direction = newIndex > oldIndex ? 'forward' : 'backward';
-    idx = newIndex;
-
-    location.hash = String(idx + 1);
-
-    animateTransition(oldIndex, idx, direction);
-    updateUI();
-    updateGlow();
-  }
-
-  function animateTransition(oldIndex, newIndex, direction){
-    if(oldIndex === newIndex) return;
-
-    const oldSlide = slides[oldIndex];
-    const newSlide = slides[newIndex];
-
-    slides.forEach(s=>{
-      s.classList.remove(
-        'slide-enter-up','slide-exit-up',
-        'slide-enter-down','slide-exit-down',
-        'before','after','active'
-      );
-      s.style.pointerEvents = 'none';
-    });
-
-    if(!oldSlide || !newSlide){
-      setInitialSlide(newIndex);
-      return;
-    }
-
-    const enterClass = direction === 'forward' ? 'slide-enter-up' : 'slide-enter-down';
-    const exitClass  = direction === 'forward' ? 'slide-exit-up'  : 'slide-exit-down';
-
-    oldSlide.classList.add(exitClass, direction === 'forward' ? 'before' : 'after');
-    newSlide.classList.add('active', enterClass);
-    newSlide.style.pointerEvents = 'auto';
-
-    [oldSlide, newSlide].forEach(slide=>{
-      slide.addEventListener('animationend', function handler(){
-        slide.classList.remove(
-          'slide-enter-up','slide-exit-up',
-          'slide-enter-down','slide-exit-down',
-          'before','after'
-        );
-        if(slide !== slides[idx]){
-          slide.classList.remove('active');
-          slide.style.pointerEvents = 'none';
-        }
-        slide.removeEventListener('animationend', handler);
-      }, { once:true });
-    });
-  }
-
-  function updateUI(){
-    if (counter) counter.textContent = `${idx+1} / ${slides.length}`;
-    if (titleEl) titleEl.textContent = slides[idx].dataset.title || `Slide ${idx+1}`;
-    if (progressEl) progressEl.style.width = `${((idx+1)/slides.length)*100}%`;
-
-    if(showNotes && notesBody){
-      notesBody.textContent = slides[idx].dataset.notes || 'No notes for this slide.';
-    }
-  }
-
-  // Glow position + intensity based on slide index (subtle lighting shift)
-  function updateGlow(){
-    if(!parallaxGroup) return;
-    const total = Math.max(slides.length - 1, 1);
-    const t = idx / total; // 0..1 across deck
-
-    const glowX = 25 + 50 * t;      // 25% → 75%
-    const glowY = 25 + 20 * (1 - t);// ~45% → ~25%
-    const strength = 0.35 + 0.25 * Math.sin(t * Math.PI); // 0.35 → 0.6 → 0.35
-
-    parallaxGroup.style.setProperty('--glow-x', glowX + '%');
-    parallaxGroup.style.setProperty('--glow-y', glowY + '%');
-    parallaxGroup.style.setProperty('--glow-strength', String(strength));
-  }
-
-  // NAV BUTTONS
-  if (prevBtn) prevBtn.addEventListener('click', ()=> { if(!overview) goto(idx-1); });
-  if (nextBtn) nextBtn.addEventListener('click', ()=> { if(!overview) goto(idx+1); });
-
-  // KEYBOARD CONTROLS
-  window.addEventListener('keydown', (e)=>{
-    const key = e.key.toLowerCase();
-
-    if(['arrowright','pagedown',' '].includes(key)){
-      e.preventDefault();
-      if(!overview) goto(idx+1);
-    }
-    if(['arrowleft','pageup'].includes(key)){
-      e.preventDefault();
-      if(!overview) goto(idx-1);
-    }
-    if(key === 'home'){ if(!overview) goto(0); }
-    if(key === 'end'){ if(!overview) goto(slides.length-1); }
-
-    if(key === 'o'){
-      overview = !overview;
-      document.body.classList.toggle('overview', overview);
-      if (overviewBtn) overviewBtn.setAttribute('aria-pressed', String(overview));
-
-      if(overview){
-        slides.forEach(s=>{
-          s.classList.add('active');
-          s.style.pointerEvents = 'auto';
-        });
-      }else{
-        setInitialSlide(idx);
-        updateUI();
-        updateGlow();
-      }
-    }
-
-    if(key === 'n'){
-      toggleNotes();
-    }
+function layoutSlides() {
+  slides.forEach((slide, index) => {
+    const offset = index - currentSlideIndex; // -1, 0, 1, ...
+    slide.style.setProperty("--slide-offset", offset);
+    slide.classList.toggle("is-active", index === currentSlideIndex);
+    slide.classList.toggle("is-far", Math.abs(offset) > 1);
   });
 
-  // MULTI-LAYER PARALLAX: move layers at different speeds with mouse
-  if(parallaxGroup && deck && parallaxLayers.length){
-    window.addEventListener('mousemove', (e)=>{
-      const rect = deck.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-
-      const relX = ((e.clientX - rect.left) / rect.width) - 0.5; // -0.5..0.5
-      const relY = ((e.clientY - rect.top) / rect.height) - 0.5;
-
-      parallaxLayers.forEach(layer=>{
-        const depth = parseFloat(layer.dataset.depth || '0.2'); // 0..1
-
-        // Deep 3D feel: nearer layers move much more
-        const translateX = relX * depth * parallaxStrengthX;
-        const translateY = relY * depth * parallaxStrengthY;
-
-        layer.style.transform =
-          `translate3d(${translateX}px, ${translateY}px, 0)`;
-      });
-    }, { passive: true });
-  }
-
-  // TOUCH / SWIPE (simple)
-  let touchStartX = 0;
-  deck.addEventListener('touchstart', (e)=>{
-    touchStartX = e.changedTouches[0].clientX;
-  }, {passive:true});
-
-  deck.addEventListener('touchend', (e)=>{
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    if(Math.abs(dx) > 40){
-      if(!overview){
-        if(dx < 0) goto(idx+1);
-        else goto(idx-1);
-      }
-    }
-  }, {passive:true});
-
-  // HASH CHANGE (deep linking via URL)
-  window.addEventListener('hashchange', ()=>{
-    const newIndex = clamp(parseHash(),0,slides.length-1);
-    if(newIndex === idx) return;
-    const direction = newIndex > idx ? 'forward' : 'backward';
-    const oldIndex = idx;
-    idx = newIndex;
-    animateTransition(oldIndex, idx, direction);
-    updateUI();
-    updateGlow();
+  dots.forEach((dot, index) => {
+    dot.classList.toggle("is-active", index === currentSlideIndex);
   });
 
-  // NOTES
-  function toggleNotes(){
-    showNotes = !showNotes;
-    if (notesBtn) notesBtn.setAttribute('aria-pressed', String(showNotes));
-    if (!notesPanel) return;
-    notesPanel.hidden = !showNotes;
-    if(showNotes && notesBody){
-      notesBody.textContent = slides[idx].dataset.notes || 'No notes for this slide.';
-    }
+  // update hash (1-based)
+  const hashIndex = currentSlideIndex + 1;
+  if (location.hash !== `#${hashIndex}`) {
+    history.replaceState(null, "", `#${hashIndex}`);
   }
 
-  if (notesBtn) notesBtn.addEventListener('click', toggleNotes);
+  // nudge parallax so slide move is visible
+  applyParallax(lastMouseXRatio, lastMouseYRatio);
+}
 
-  if (closeNotes) {
-    closeNotes.addEventListener('click', ()=>{
-      showNotes = false;
-      if (notesBtn) notesBtn.setAttribute('aria-pressed', 'false');
-      if (notesPanel) notesPanel.hidden = true;
-    });
+function goToSlide(newIndex) {
+  if (newIndex < 0 || newIndex >= slides.length) return;
+  currentSlideIndex = newIndex;
+  layoutSlides();
+}
+
+// initial index from hash
+(function initFromHash() {
+  const hash = location.hash.replace("#", "");
+  const asNum = Number(hash);
+  if (!Number.isNaN(asNum) && asNum >= 1 && asNum <= slides.length) {
+    currentSlideIndex = asNum - 1;
   }
-
-  // OVERVIEW CLICK TO SELECT SLIDE
-  slides.forEach((s, i)=>{
-    s.addEventListener('click', ()=>{
-      if(overview){
-        overview = false;
-        document.body.classList.remove('overview');
-        if (overviewBtn) overviewBtn.setAttribute('aria-pressed', 'false');
-        goto(i);
-      }
-    });
-  });
-
-  // Depth presets
-  depthButtons.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const preset = btn.dataset.depth || 'medium';
-      setDepthPreset(preset);
-    });
-  });
-
-  function setDepthPreset(preset){
-    const rootStyle = document.documentElement.style;
-
-    if(preset === 'subtle'){
-      parallaxStrengthX = 40;
-      parallaxStrengthY = 30;
-      rootStyle.setProperty('--blur-bg1','10px');
-      rootStyle.setProperty('--blur-layer3','7px');
-      rootStyle.setProperty('--blur-layer2','4px');
-      rootStyle.setProperty('--blur-main','1px');
-    }else if(preset === 'medium'){
-      parallaxStrengthX = 80;
-      parallaxStrengthY = 55;
-      rootStyle.setProperty('--blur-bg1','9px');
-      rootStyle.setProperty('--blur-layer3','6px');
-      rootStyle.setProperty('--blur-layer2','3px');
-      rootStyle.setProperty('--blur-main','0.5px');
-    }else{ // deep
-      parallaxStrengthX = 120;
-      parallaxStrengthY = 80;
-      rootStyle.setProperty('--blur-bg1','8px');
-      rootStyle.setProperty('--blur-layer3','5px');
-      rootStyle.setProperty('--blur-layer2','3px');
-      rootStyle.setProperty('--blur-main','0px');
-    }
-
-    document.documentElement.setAttribute('data-depth-preset', preset);
-
-    depthButtons.forEach(b=>{
-      const isActive = b.dataset.depth === preset;
-      b.setAttribute('aria-pressed', String(isActive));
-    });
-  }
-
-  // Ensure active slide looks correct in overview
-  const style = document.createElement('style');
-  style.textContent = `
-    body.overview .slide.active {
-      opacity:1;
-      transform:scale(1);
-      filter:none;
-    }
-  `;
-  document.head.appendChild(style);
-
 })();
+
+layoutSlides();
+
+// nav buttons
+prevBtn.addEventListener("click", () => {
+  goToSlide(currentSlideIndex - 1);
+});
+
+nextBtn.addEventListener("click", () => {
+  goToSlide(currentSlideIndex + 1);
+});
+
+// dots click
+dots.forEach((dot) => {
+  dot.addEventListener("click", () => {
+    const index = Number(dot.dataset.index || "0");
+    goToSlide(index);
+  });
+});
+
+// keyboard navigation
+window.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowRight") {
+    goToSlide(currentSlideIndex + 1);
+  } else if (event.key === "ArrowLeft") {
+    goToSlide(currentSlideIndex - 1);
+  }
+});
+
+// ------------- PARALLAX ENGINE -------------
+
+const parallaxLayers = Array.from(
+  document.querySelectorAll(".parallax-layer")
+);
+
+let parallaxStrengthX = 40; // mouse based
+let parallaxStrengthY = 25;
+
+const slideParallaxShift = 140; // pixels per slide at depth 1.0
+
+let lastMouseXRatio = 0.5;
+let lastMouseYRatio = 0.5;
+
+function applyParallax(mouseXRatio, mouseYRatio) {
+  lastMouseXRatio = mouseXRatio;
+  lastMouseYRatio = mouseYRatio;
+
+  parallaxLayers.forEach((layer) => {
+    const depth = parseFloat(layer.dataset.depth || "0");
+    const mouseOffsetX = (mouseXRatio - 0.5) * parallaxStrengthX * depth;
+    const mouseOffsetY = (mouseYRatio - 0.5) * parallaxStrengthY * depth;
+    const slideOffsetX = currentSlideIndex * slideParallaxShift * depth;
+
+    const x = mouseOffsetX + slideOffsetX;
+    const y = mouseOffsetY;
+
+    layer.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  });
+}
+
+// mouse move
+window.addEventListener("mousemove", (event) => {
+  const w = window.innerWidth || 1;
+  const h = window.innerHeight || 1;
+  const xRatio = event.clientX / w;
+  const yRatio = event.clientY / h;
+  applyParallax(xRatio, yRatio);
+});
+
+// set initial state
+applyParallax(0.5, 0.5);
+
+// ------------- PRESETS & BLUR CONTROLS -------------
+
+const rootStyle = document.documentElement.style;
+const presetButtons = Array.from(document.querySelectorAll(".preset-btn"));
+
+const blurBgInput = document.getElementById("blurBg");
+const blurLayer3Input = document.getElementById("blurLayer3");
+const blurLayer2Input = document.getElementById("blurLayer2");
+const blurMainInput = document.getElementById("blurMain");
+
+const presets = {
+  subtle: {
+    strengthX: 25,
+    strengthY: 18,
+    blurBg1: 1.5,
+    blurLayer3: 2,
+    blurLayer2: 1.2,
+    blurMain: 0
+  },
+  medium: {
+    strengthX: 40,
+    strengthY: 25,
+    blurBg1: 2.5,
+    blurLayer3: 3,
+    blurLayer2: 1.6,
+    blurMain: 0
+  },
+  deep: {
+    strengthX: 60,
+    strengthY: 32,
+    blurBg1: 4,
+    blurLayer3: 4.5,
+    blurLayer2: 2.2,
+    blurMain: 0.4
+  }
+};
+
+function applyBlurVars({
+  blurBg1,
+  blurLayer3,
+  blurLayer2,
+  blurMain
+}) {
+  rootStyle.setProperty("--blur-bg1", `${blurBg1}px`);
+  rootStyle.setProperty("--blur-layer3", `${blurLayer3}px`);
+  rootStyle.setProperty("--blur-layer2", `${blurLayer2}px`);
+  rootStyle.setProperty("--blur-main", `${blurMain}px`);
+
+  // sync sliders
+  blurBgInput.value = String(blurBg1);
+  blurLayer3Input.value = String(blurLayer3);
+  blurLayer2Input.value = String(blurLayer2);
+  blurMainInput.value = String(blurMain);
+}
+
+function activatePreset(name) {
+  const preset = presets[name];
+  if (!preset) return;
+
+  parallaxStrengthX = preset.strengthX;
+  parallaxStrengthY = preset.strengthY;
+  applyBlurVars(preset);
+
+  presetButtons.forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.preset === name);
+  });
+
+  // re-apply parallax with new strengths
+  applyParallax(lastMouseXRatio, lastMouseYRatio);
+}
+
+// preset button events
+presetButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const presetName = btn.dataset.preset;
+    activatePreset(presetName);
+  });
+});
+
+// slider events – fine tuning per layer
+function handleBlurInput() {
+  const bg = Number(blurBgInput.value || "0");
+  const l3 = Number(blurLayer3Input.value || "0");
+  const l2 = Number(blurLayer2Input.value || "0");
+  const main = Number(blurMainInput.value || "0");
+
+  rootStyle.setProperty("--blur-bg1", `${bg}px`);
+  rootStyle.setProperty("--blur-layer3", `${l3}px`);
+  rootStyle.setProperty("--blur-layer2", `${l2}px`);
+  rootStyle.setProperty("--blur-main", `${main}px`);
+}
+
+[blurBgInput, blurLayer3Input, blurLayer2Input, blurMainInput].forEach(
+  (input) => {
+    input.addEventListener("input", handleBlurInput);
+  }
+);
+
+// initialize to "deep 3D" by default if you want strong depth,
+// or switch to "medium" / "subtle" here.
+activatePreset("deep");
