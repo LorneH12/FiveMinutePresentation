@@ -1,233 +1,531 @@
-// ---- SAFETY HELPERS ----
-function $(selector, scope = document) {
-  return scope.querySelector(selector);
-}
-function $all(selector, scope = document) {
-  return Array.from(scope.querySelectorAll(selector));
-}
+/* -------- RESET / BASE -------- */
 
-// ---- SLIDE LOGIC ----
-const slides = $all(".slide");
-const viewport = $("#slidesViewport");
-const prevBtn = $("#prevSlideBtn");
-const nextBtn = $("#nextSlideBtn");
-const dotsContainer = $("#slideDots");
-
-let currentIndex = 0;
-const totalSlides = slides.length;
-
-// build dots
-if (dotsContainer && totalSlides > 0) {
-  slides.forEach((slide, index) => {
-    const dot = document.createElement("button");
-    dot.className = "slide-dot" + (index === 0 ? " is-active" : "");
-    dot.setAttribute("type", "button");
-    dot.dataset.index = String(index);
-    dotsContainer.appendChild(dot);
-  });
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-const dots = $all(".slide-dot");
-
-function updateSlides() {
-  slides.forEach((slide, index) => {
-    const offset = index - currentIndex;
-    slide.style.setProperty("--slide-offset", offset);
-
-    if (index === currentIndex) {
-      slide.classList.add("is-active");
-      slide.classList.remove("is-far");
-    } else {
-      slide.classList.remove("is-active");
-      // fade distant slides a bit more
-      if (Math.abs(offset) > 1) {
-        slide.classList.add("is-far");
-      } else {
-        slide.classList.remove("is-far");
-      }
-    }
-  });
-
-  dots.forEach((dot, index) => {
-    if (index === currentIndex) {
-      dot.classList.add("is-active");
-    } else {
-      dot.classList.remove("is-active");
-    }
-  });
-
-  applyParallax();
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-function goToSlide(index) {
-  if (!totalSlides) return;
-  const clamped =
-    ((index % totalSlides) + totalSlides) % totalSlides; // wrap safely
-  currentIndex = clamped;
-  updateSlides();
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  color: #fdf7f2;
+  background: #050306;
 }
 
-// initial state
-if (totalSlides) {
-  updateSlides();
+/* -------- THEME VARIABLES -------- */
+
+:root {
+  --overlay-bg: rgba(8, 3, 2, 0.82);
+  --overlay-border: rgba(255, 245, 230, 0.32);
+  --accent: #ffc86b;
+  --accent-soft: rgba(255, 200, 107, 0.36);
+
+  /* per-layer blur amounts – controlled by JS + sliders */
+  --blur-bg1: 2px;
+  --blur-layer3: 2.5px;
+  --blur-layer2: 1.5px;
+  --blur-main: 0px;
 }
 
-// button events
-if (prevBtn) {
-  prevBtn.addEventListener("click", () => goToSlide(currentIndex - 1));
-}
-if (nextBtn) {
-  nextBtn.addEventListener("click", () => goToSlide(currentIndex + 1));
+/* -------- LAYOUT -------- */
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-// dot click events
-dots.forEach((dot) => {
-  dot.addEventListener("click", () => {
-    const idx = parseInt(dot.dataset.index || "0", 10);
-    goToSlide(idx);
-  });
-});
+.top-bar {
+  position: relative;
+  z-index: 5;
+  padding: 0.9rem 1.2rem 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.4rem;
+  align-items: center;
+  justify-content: space-between;
+  background: radial-gradient(circle at 10% 0, #24100b 0, #050306 52%, #02010f 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-// keyboard
-document.addEventListener("keydown", (evt) => {
-  if (evt.key === "ArrowRight") {
-    goToSlide(currentIndex + 1);
-  } else if (evt.key === "ArrowLeft") {
-    goToSlide(currentIndex - 1);
+.brand h1 {
+  margin: 0.15rem 0 0;
+  font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+  letter-spacing: 0.03em;
+}
+
+.brand-tag {
+  display: inline-flex;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
+}
+
+.top-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.meta-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.presentation-shell {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* -------- PARALLAX BACKGROUND (ROOM) -------- */
+
+.parallax-group {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* global glow / dramatic lighting */
+.parallax-group::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 230, 180, 0.24), transparent 55%),
+    radial-gradient(circle at 15% 10%, rgba(255, 255, 255, 0.18), transparent 55%),
+    radial-gradient(circle at 85% 85%, rgba(255, 130, 130, 0.15), transparent 55%);
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  filter: blur(6px);
+}
+
+/* base layer behavior */
+.parallax-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  will-change: transform;
+}
+
+/* IMPORTANT: default image sizing – no more giant 120% min-width for everything */
+.parallax-layer img {
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+  transform-origin: center;
+  filter: blur(var(--layer-blur, 0px));
+  pointer-events: none;
+}
+
+/* BACKGROUND WALL – Picture9 fills the stage */
+.layer-bg1 img {
+  width: 130vw;
+}
+.layer-bg1 {
+  --layer-blur: var(--blur-bg1);
+}
+
+/* MID DEPTH swirls (Picture7 & Picture6) – large but not full frame */
+.layer-3 img {
+  width: 115vw;
+}
+.layer-3 {
+  --layer-blur: var(--blur-layer3);
+}
+
+.layer-2 img {
+  width: 110vw;
+}
+.layer-2 {
+  --layer-blur: var(--blur-layer2);
+}
+
+/* MAIN CAKE – Picture2 sits just behind the info card */
+.layer-main img {
+  width: 52vw;
+}
+.layer-main {
+  --layer-blur: var(--blur-main);
+  justify-content: center;
+  align-items: center;
+  /* slightly down so it peeks around the card */
+  translate: 4% 8%;
+}
+
+/* -------- FLOATING OBJECTS (ROOM FEEL) -------- */
+
+/* milk splash */
+.obj-milk img {
+  width: 320px;
+}
+.obj-milk {
+  justify-content: flex-start;
+  align-items: flex-end;
+  translate: -45% 40%;
+}
+
+/* whole cake (small) */
+.obj-whole img {
+  width: 340px;
+}
+.obj-whole {
+  justify-content: flex-start;
+  align-items: flex-start;
+  translate: -40% -10%;
+}
+
+/* sauce splash A */
+.obj-sauce-a img {
+  width: 380px;
+}
+.obj-sauce-a {
+  justify-content: center;
+  align-items: flex-end;
+  translate: 10% 45%;
+}
+
+/* sauce splash B */
+.obj-sauce-b img {
+  width: 360px;
+}
+.obj-sauce-b {
+  justify-content: flex-end;
+  align-items: flex-start;
+  translate: 45% -18%;
+}
+
+/* sugar burst */
+.obj-sugar img {
+  width: 260px;
+}
+.obj-sugar {
+  justify-content: flex-start;
+  align-items: flex-start;
+  translate: -48% -24%;
+}
+
+/* slice */
+.obj-slice img {
+  width: 260px;
+}
+.obj-slice {
+  justify-content: flex-end;
+  align-items: center;
+  translate: 38% 14%;
+}
+
+/* blueberry */
+.obj-blueberry img {
+  width: 150px;
+}
+.obj-blueberry {
+  justify-content: flex-end;
+  align-items: flex-start;
+  translate: 32% -8%;
+}
+
+/* raspberry top-view */
+.obj-rasp-top img {
+  width: 140px;
+}
+.obj-rasp-top {
+  justify-content: center;
+  align-items: flex-start;
+  translate: -8% -20%;
+}
+
+/* raspberry angled */
+.obj-rasp-side img {
+  width: 170px;
+}
+.obj-rasp-side {
+  justify-content: flex-start;
+  align-items: flex-end;
+  translate: -28% 26%;
+}
+
+/* -------- SLIDES (FOREGROUND INFO BOXES) -------- */
+
+.slides-shell {
+  position: relative;
+  z-index: 2; /* sits above parallax room */
+  height: calc(100vh - 72px);
+  max-height: 1000px;
+  padding: 0.7rem 0.75rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.slides-viewport {
+  position: relative;
+  flex: 1;
+  border-radius: 1.7rem;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  background:
+    radial-gradient(circle at 35% 0, rgba(255, 255, 255, 0.06), transparent 55%),
+    radial-gradient(circle at 80% 100%, rgba(255, 77, 120, 0.08), transparent 55%),
+    rgba(5, 2, 2, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
+/* horizontal slide track */
+.slide {
+  position: absolute;
+  inset: 0;
+  padding: clamp(1.6rem, 4vw, 3rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  --slide-offset: 0;
+
+  opacity: 0;
+  transform: translate3d(calc(var(--slide-offset) * 120%), 0, 0) scale(0.9);
+  transition:
+    transform 0.85s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.85s ease;
+  pointer-events: none;
+}
+
+.slide.is-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  pointer-events: auto;
+}
+
+.slide.is-far {
+  opacity: 0.12;
+}
+
+/* the actual foreground info card */
+.slide-inner {
+  max-width: 880px;
+  width: 100%;
+  background: var(--overlay-bg);
+  border-radius: 1.4rem;
+  padding: clamp(1.4rem, 3vw, 2.25rem);
+  border: 1px solid var(--overlay-border);
+  box-shadow:
+    0 22px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+/* text styling */
+
+.eyebrow {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(255, 240, 220, 0.75);
+  margin: 0 0 0.4rem;
+}
+
+h2 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+}
+
+.lead {
+  font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+  margin-bottom: 0.7rem;
+}
+
+.slide-inner p {
+  margin: 0.25rem 0 0.55rem;
+}
+
+.slide-inner ul,
+.slide-inner ol {
+  margin: 0.25rem 0 0.25rem 1.15rem;
+  padding: 0;
+  font-size: 0.92rem;
+}
+
+.slide-inner li + li {
+  margin-top: 0.15rem;
+}
+
+.slide-inner h3 {
+  margin: 0.4rem 0 0.2rem;
+  font-size: 0.98rem;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.4rem;
+  margin-top: 0.5rem;
+}
+
+.note {
+  font-size: 0.8rem;
+  color: rgba(255, 236, 214, 0.8);
+  border-left: 2px solid var(--accent-soft);
+  padding-left: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+ol.tight {
+  padding-left: 1.15rem;
+}
+
+/* -------- NAV & CONTROLS -------- */
+
+.nav-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-top: 0.65rem;
+}
+
+.nav-btn {
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: radial-gradient(circle at 30% 0, rgba(255, 255, 255, 0.18), rgba(0, 0, 0, 0.6));
+  color: #fff7ec;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.nav-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 200, 107, 0.4);
+}
+
+.slide-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 360px;
+  justify-content: center;
+}
+
+.slide-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.slide-dot.is-active {
+  width: 20px;
+  background: var(--accent);
+  border-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 4px rgba(255, 200, 107, 0.22);
+}
+
+/* parallax controls */
+
+.parallax-ui {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: rgba(255, 245, 230, 0.85);
+}
+
+.preset-group,
+.blur-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.preset-btn {
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fffaf1;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+
+.preset-btn.is-active {
+  border-color: var(--accent);
+  background: radial-gradient(circle at 30% 0, var(--accent-soft), rgba(0, 0, 0, 0.7));
+}
+
+.blur-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.blur-controls input[type="range"] {
+  width: 70px;
+}
+
+.hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.78;
+  text-align: center;
+}
+
+/* -------- RESPONSIVE -------- */
+
+@media (max-width: 768px) {
+  .slides-shell {
+    height: calc(100vh - 76px);
   }
-});
 
-// basic touch swipe for mobile
-let touchStartX = null;
-
-viewport &&
-  viewport.addEventListener(
-    "touchstart",
-    (evt) => {
-      const t = evt.touches[0];
-      touchStartX = t.clientX;
-    },
-    { passive: true }
-  );
-
-viewport &&
-  viewport.addEventListener(
-    "touchend",
-    (evt) => {
-      if (touchStartX === null) return;
-      const t = evt.changedTouches[0];
-      const dx = t.clientX - touchStartX;
-      const threshold = 50; // px
-      if (dx > threshold) {
-        goToSlide(currentIndex - 1);
-      } else if (dx < -threshold) {
-        goToSlide(currentIndex + 1);
-      }
-      touchStartX = null;
-    },
-    { passive: true }
-  );
-
-// ---- PARALLAX / BLUR LOGIC ----
-const rootStyle = document.documentElement.style;
-const parallaxLayers = $all(".parallax-layer");
-
-// preset buttons
-const presetButtons = $all(".preset-btn");
-
-// blur sliders
-const blurBg = $("#blurBg");
-const blurMid1 = $("#blurMid1");
-const blurMid2 = $("#blurMid2");
-const blurFore = $("#blurFore");
-
-// apply blur from sliders
-function syncBlurFromSliders() {
-  if (blurBg) rootStyle.setProperty("--blur-bg1", blurBg.value + "px");
-  if (blurMid1) rootStyle.setProperty("--blur-layer3", blurMid1.value + "px");
-  if (blurMid2) rootStyle.setProperty("--blur-layer2", blurMid2.value + "px");
-  if (blurFore) rootStyle.setProperty("--blur-main", blurFore.value + "px");
-}
-
-[blurBg, blurMid1, blurMid2, blurFore].forEach((input) => {
-  if (!input) return;
-  input.addEventListener("input", syncBlurFromSliders);
-});
-
-syncBlurFromSliders();
-
-// presets
-function applyPreset(name) {
-  presetButtons.forEach((btn) =>
-    btn.classList.toggle("is-active", btn.dataset.preset === name)
-  );
-
-  if (name === "subtle") {
-    if (blurBg) blurBg.value = "1.5";
-    if (blurMid1) blurMid1.value = "2.0";
-    if (blurMid2) blurMid2.value = "1.0";
-    if (blurFore) blurFore.value = "0";
-  } else if (name === "medium") {
-    if (blurBg) blurBg.value = "2.5";
-    if (blurMid1) blurMid1.value = "3.0";
-    if (blurMid2) blurMid2.value = "1.8";
-    if (blurFore) blurFore.value = "0.25";
-  } else if (name === "deep") {
-    if (blurBg) blurBg.value = "3.5";
-    if (blurMid1) blurMid1.value = "4.0";
-    if (blurMid2) blurMid2.value = "2.5";
-    if (blurFore) blurFore.value = "0.5";
+  .slide-inner {
+    padding: 1.15rem 1rem;
   }
 
-  syncBlurFromSliders();
-  applyParallax();
+  .nav-shell {
+    gap: 0.5rem;
+  }
+
+  .slide-dots {
+    max-width: 220px;
+  }
+
+  .parallax-ui {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
-
-presetButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const name = btn.dataset.preset || "medium";
-    applyPreset(name);
-  });
-});
-
-// horizontal parallax tied to slide index and pointer movement
-let pointerOffsetX = 0;
-let pointerOffsetY = 0;
-
-function applyParallax() {
-  if (!parallaxLayers.length) return;
-
-  const progress =
-    totalSlides > 1 ? currentIndex / (totalSlides - 1) : 0.5; // 0 → 1
-
-  parallaxLayers.forEach((layer) => {
-    const depth = parseFloat(layer.dataset.depth || "0.5");
-    const baseX = (progress - 0.5) * depth * 60; // slide-based
-    const pointerX = pointerOffsetX * depth * 20;
-    const pointerY = pointerOffsetY * depth * 16;
-
-    const translateX = baseX + pointerX;
-    const translateY = pointerY;
-
-    layer.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(1.02)`;
-  });
-}
-
-// pointer-based parallax (desktop)
-const parallaxRoot = $("#parallaxRoot");
-if (parallaxRoot) {
-  parallaxRoot.addEventListener("pointermove", (evt) => {
-    const rect = parallaxRoot.getBoundingClientRect();
-    const x = (evt.clientX - rect.left) / rect.width; // 0–1
-    const y = (evt.clientY - rect.top) / rect.height;
-    pointerOffsetX = x - 0.5;
-    pointerOffsetY = y - 0.5;
-    applyParallax();
-  });
-}
-
-// update on resize just in case
-window.addEventListener("resize", applyParallax);
-
-// initial parallax
-applyParallax();
