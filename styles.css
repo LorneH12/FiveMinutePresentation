@@ -83,7 +83,11 @@ body{
   box-shadow: var(--shadow);
   font-weight:600;
   font-size:.9rem;
-  transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background .18s ease,
+    border-color .18s ease;
 }
 .btn:hover{
   transform: translateY(-1px);
@@ -111,7 +115,7 @@ body{
   background: linear-gradient(90deg,var(--accent), var(--accent-2));
 }
 
-/* DECK & SLIDES – full-screen mode */
+/* DECK & SLIDES – full-screen cards */
 
 .deck{
   flex:1;
@@ -123,6 +127,7 @@ body{
   margin: 0 auto;
 }
 
+/* Base slide card */
 .slide{
   position:absolute;
   inset:0;
@@ -139,15 +144,13 @@ body{
   justify-content:flex-start;
   align-items:flex-start;
   opacity:0;
-  transform: translateY(20px) scale(.96);
+  transform: translateY(30px) scale(.94);
+  filter: blur(8px);
   pointer-events:none;
-  transition:
-    opacity .4s ease,
-    transform .4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* “Plate glow” highlight */
 .slide::before{
-  /* subtle plate highlight */
   content:"";
   position:absolute;
   inset:18% 8% auto 8%;
@@ -158,21 +161,84 @@ body{
   mix-blend-mode:screen;
 }
 
-/* Active slide = full-screen info block */
-
+/* Active slide (steady state) */
 .slide.active{
   opacity:1;
   transform: translateY(0) scale(1);
+  filter: blur(0);
   pointer-events:auto;
+  z-index:2;
 }
 
-/* Classes for direction (in case we want fancier directional animations) */
+/* Directional helpers (no sideways motion!) */
+.slide.before{ z-index:1; }
+.slide.after{ z-index:1; }
 
-.slide.before{
-  transform: translateX(-8%) scale(.95);
+/* Fancy vertical depth transitions */
+@keyframes slide-enter-up {
+  from {
+    opacity:0;
+    transform: translateY(40px) scale(.9);
+    filter: blur(12px);
+  }
+  to {
+    opacity:1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
-.slide.after{
-  transform: translateX(8%) scale(.95);
+
+@keyframes slide-exit-up {
+  from {
+    opacity:1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity:0;
+    transform: translateY(-40px) scale(.94);
+    filter: blur(12px);
+  }
+}
+
+@keyframes slide-enter-down {
+  from {
+    opacity:0;
+    transform: translateY(-40px) scale(.9);
+    filter: blur(12px);
+  }
+  to {
+    opacity:1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes slide-exit-down {
+  from {
+    opacity:1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity:0;
+    transform: translateY(40px) scale(.94);
+    filter: blur(12px);
+  }
+}
+
+/* Classes applied by JS */
+.slide-enter-up{
+  animation: slide-enter-up 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+.slide-exit-up{
+  animation: slide-exit-up 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+.slide-enter-down{
+  animation: slide-enter-down 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+.slide-exit-down{
+  animation: slide-exit-down 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
 /* Typography inside slide */
@@ -302,11 +368,13 @@ body.overview .slide{
   max-height:40vh;
   opacity:1;
   transform:scale(1);
+  filter:none;
   pointer-events:auto;
   cursor:pointer;
   border-radius:22px;
   padding:1rem;
   transition: transform .2s ease, box-shadow .2s ease;
+  animation:none !important;
 }
 body.overview .slide::before{
   inset:35% 10% auto 10%;
@@ -365,6 +433,7 @@ body.overview .slide p.lead{
     position:static;
     opacity:1;
     transform:none;
+    filter:none;
     margin: 0 0 1.5rem;
     box-shadow:none;
     border-radius:0;
