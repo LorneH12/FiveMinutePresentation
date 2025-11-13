@@ -1,4 +1,4 @@
-// Simple 12-slide deck controller with full-screen slides & overview mode
+// 12-slide deck controller with vertical depth transitions (no sideways motion)
 (function(){
   const deck = document.getElementById('deck');
   const slides = Array.from(deck.querySelectorAll('.slide'));
@@ -18,7 +18,9 @@
   let overview = false;
   let showNotes = false;
 
-  update();
+  // Initial render without animation
+  setInitialSlide(idx);
+  updateUI();
 
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
@@ -27,32 +29,90 @@
     return isNaN(n) ? 1 : (n - 1);
   }
 
-  function goto(i){
-    idx = clamp(i, 0, slides.length - 1);
-    // Only update hash if not in overview so deep-links remain clean
-    location.hash = String(idx + 1);
-    update();
+  function setInitialSlide(i){
+    slides.forEach((s, index)=>{
+      const isActive = index === i;
+      s.classList.toggle('active', isActive);
+      s.classList.remove(
+        'slide-enter-up','slide-exit-up',
+        'slide-enter-down','slide-exit-down',
+        'before','after'
+      );
+      s.style.pointerEvents = isActive ? 'auto' : 'none';
+    });
   }
 
-  function update(){
-    slides.forEach((s,i)=>{
-      const isActive = i === idx;
-      s.classList.toggle('active', isActive);
-      s.classList.toggle('before', i < idx);
-      s.classList.toggle('after', i > idx);
+  function goto(newIndex){
+    newIndex = clamp(newIndex, 0, slides.length - 1);
+    if(newIndex === idx) return;
+
+    const oldIndex = idx;
+    const direction = newIndex > oldIndex ? 'forward' : 'backward';
+    idx = newIndex;
+
+    // Update hash for deep-linking
+    location.hash = String(idx + 1);
+
+    animateTransition(oldIndex, idx, direction);
+    updateUI();
+  }
+
+  function animateTransition(oldIndex, newIndex, direction){
+    if(oldIndex === newIndex) return;
+
+    const oldSlide = slides[oldIndex];
+    const newSlide = slides[newIndex];
+
+    // Clear previous animation classes
+    slides.forEach(s=>{
+      s.classList.remove(
+        'slide-enter-up','slide-exit-up',
+        'slide-enter-down','slide-exit-down',
+        'before','after','active'
+      );
+      s.style.pointerEvents = 'none';
     });
 
+    if(!oldSlide || !newSlide){
+      // Fail-safe: just show new slide
+      setInitialSlide(newIndex);
+      return;
+    }
+
+    const enterClass = direction === 'forward' ? 'slide-enter-up' : 'slide-enter-down';
+    const exitClass  = direction === 'forward' ? 'slide-exit-up'  : 'slide-exit-down';
+
+    oldSlide.classList.add(exitClass, direction === 'forward' ? 'before' : 'after');
+    newSlide.classList.add('active', enterClass);
+    newSlide.style.pointerEvents = 'auto';
+
+    [oldSlide, newSlide].forEach(slide=>{
+      slide.addEventListener('animationend', function handler(){
+        slide.classList.remove(
+          'slide-enter-up','slide-exit-up',
+          'slide-enter-down','slide-exit-down',
+          'before','after'
+        );
+        if(slide !== slides[idx]){
+          slide.classList.remove('active');
+          slide.style.pointerEvents = 'none';
+        }
+        slide.removeEventListener('animationend', handler);
+      }, { once:true });
+    });
+  }
+
+  function updateUI(){
     counter.textContent = `${idx+1} / ${slides.length}`;
     titleEl.textContent = slides[idx].dataset.title || `Slide ${idx+1}`;
     progressEl.style.width = `${((idx+1)/slides.length)*100}%`;
 
-    // Update notes if visible
     if(showNotes){
       notesBody.textContent = slides[idx].dataset.notes || 'No notes for this slide.';
     }
   }
 
-  // NAVIGATION BUTTONS
+  // NAV BUTTONS
   prevBtn.addEventListener('click', ()=> goto(idx-1));
   nextBtn.addEventListener('click', ()=> goto(idx+1));
 
@@ -62,27 +122,30 @@
 
     if(['arrowright','pagedown',' '].includes(key)){
       e.preventDefault();
-      goto(idx+1);
+      if(!overview) goto(idx+1);
     }
     if(['arrowleft','pageup'].includes(key)){
       e.preventDefault();
-      goto(idx-1);
+      if(!overview) goto(idx-1);
     }
-    if(key === 'home'){ goto(0); }
-    if(key === 'end'){ goto(slides.length-1); }
+    if(key === 'home'){ if(!overview) goto(0); }
+    if(key === 'end'){ if(!overview) goto(slides.length-1); }
 
     if(key === 'o'){
-      // Toggle overview grid
       overview = !overview;
       document.body.classList.toggle('overview', overview);
       overviewBtn.setAttribute('aria-pressed', String(overview));
-      // When entering overview, ensure all slides visible
+
       if(overview){
+        // Show all slides as mini cards, no animations
         slides.forEach(s=>{
           s.classList.add('active');
+          s.style.pointerEvents = 'auto';
         });
       }else{
-        update();
+        // Return to current slide full-screen
+        setInitialSlide(idx);
+        updateUI();
       }
     }
 
@@ -100,18 +163,25 @@
   deck.addEventListener('touchend', (e)=>{
     const dx = e.changedTouches[0].clientX - touchStartX;
     if(Math.abs(dx) > 40){
-      if(dx < 0) goto(idx+1);
-      else goto(idx-1);
+      if(!overview){
+        if(dx < 0) goto(idx+1);
+        else goto(idx-1);
+      }
     }
   }, {passive:true});
 
-  // HASH CHANGE (deep linking)
+  // HASH CHANGE (deep linking via URL)
   window.addEventListener('hashchange', ()=>{
-    idx = clamp(parseHash(),0,slides.length-1);
-    update();
+    const newIndex = clamp(parseHash(),0,slides.length-1);
+    if(newIndex === idx) return;
+    const direction = newIndex > idx ? 'forward' : 'backward';
+    const oldIndex = idx;
+    idx = newIndex;
+    animateTransition(oldIndex, idx, direction);
+    updateUI();
   });
 
-  // NOTES TOGGLES
+  // NOTES
   function toggleNotes(){
     showNotes = !showNotes;
     notesBtn.setAttribute('aria-pressed', String(showNotes));
@@ -141,10 +211,14 @@
     });
   });
 
-  // Inject small CSS tweak for overview spacing (if needed)
+  // Small CSS tweak to ensure active slide looks correct in overview
   const style = document.createElement('style');
   style.textContent = `
-    body.overview .slide.active { opacity:1; transform:scale(1); }
+    body.overview .slide.active {
+      opacity:1;
+      transform:scale(1);
+      filter:none;
+    }
   `;
   document.head.appendChild(style);
 
