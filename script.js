@@ -1,7 +1,7 @@
 // Deck controller with vertical depth transitions + parallax cheesecake mid-ground
 (function(){
   const deck = document.getElementById('deck');
-  const slides = Array.from(deck.querySelectorAll('.slide'));
+  const slides = deck ? Array.from(deck.querySelectorAll('.slide')) : [];
   const counter = document.getElementById('slideCounter');
   const titleEl = document.getElementById('slideTitle');
   const progressEl = document.getElementById('progress');
@@ -15,6 +15,11 @@
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
+  if (!deck || slides.length === 0) {
+    // Fail-safe: if something is really wrong, just stop here.
+    return;
+  }
+
   let idx = clamp(parseHash(), 0, slides.length - 1);
   let overview = false;
   let showNotes = false;
@@ -27,8 +32,9 @@
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
 
   function parseHash(){
-    const n = parseInt((location.hash || '#1').replace('#',''),10);
-    return isNaN(n) ? 1 : (n - 1);
+    const raw = (location.hash || '#1').replace('#','');
+    const n = parseInt(raw,10);
+    return isNaN(n) ? 0 : (n - 1);
   }
 
   function setInitialSlide(i){
@@ -105,11 +111,11 @@
   }
 
   function updateUI(){
-    counter.textContent = `${idx+1} / ${slides.length}`;
-    titleEl.textContent = slides[idx].dataset.title || `Slide ${idx+1}`;
-    progressEl.style.width = `${((idx+1)/slides.length)*100}%`;
+    if (counter) counter.textContent = `${idx+1} / ${slides.length}`;
+    if (titleEl) titleEl.textContent = slides[idx].dataset.title || `Slide ${idx+1}`;
+    if (progressEl) progressEl.style.width = `${((idx+1)/slides.length)*100}%`;
 
-    if(showNotes){
+    if(showNotes && notesBody){
       notesBody.textContent = slides[idx].dataset.notes || 'No notes for this slide.';
     }
   }
@@ -121,17 +127,17 @@
     const t = idx / total; // 0..1 across deck
 
     const glowX = 25 + 50 * t;      // 25% → 75%
-    const glowY = 25 + 20 * (1 - t);// 45% → 25%
+    const glowY = 25 + 20 * (1 - t);// ~45% → ~25%
     const strength = 0.35 + 0.25 * Math.sin(t * Math.PI); // 0.35 → 0.6 → 0.35
 
     parallaxBg.style.setProperty('--glow-x', glowX + '%');
     parallaxBg.style.setProperty('--glow-y', glowY + '%');
-    parallaxBg.style.setProperty('--glow-strength', strength.toString());
+    parallaxBg.style.setProperty('--glow-strength', String(strength));
   }
 
   // NAV BUTTONS
-  prevBtn.addEventListener('click', ()=> { if(!overview) goto(idx-1); });
-  nextBtn.addEventListener('click', ()=> { if(!overview) goto(idx+1); });
+  if (prevBtn) prevBtn.addEventListener('click', ()=> { if(!overview) goto(idx-1); });
+  if (nextBtn) nextBtn.addEventListener('click', ()=> { if(!overview) goto(idx+1); });
 
   // KEYBOARD CONTROLS
   window.addEventListener('keydown', (e)=>{
@@ -151,7 +157,7 @@
     if(key === 'o'){
       overview = !overview;
       document.body.classList.toggle('overview', overview);
-      overviewBtn.setAttribute('aria-pressed', String(overview));
+      if (overviewBtn) overviewBtn.setAttribute('aria-pressed', String(overview));
 
       if(overview){
         // Show all slides as mini cards, no animations
@@ -162,6 +168,7 @@
       }else{
         setInitialSlide(idx);
         updateUI();
+        updateGlow();
       }
     }
 
@@ -170,21 +177,24 @@
     }
   });
 
-  // PARALLAX: move cheesecake subtly with mouse
-  if(parallaxBg){
+  // PARALLAX: move cheesecake subtly with mouse on desktop
+  if(parallaxBg && deck){
     window.addEventListener('mousemove', (e)=>{
       const rect = deck.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+
       const relX = ((e.clientX - rect.left) / rect.width) - 0.5; // -0.5..0.5
       const relY = ((e.clientY - rect.top) / rect.height) - 0.5;
 
-      const translateX = relX * 24;  // feel free to tweak
+      const translateX = relX * 24;
       const translateY = relY * 18;
 
-      parallaxBg.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(1.05)`;
+      parallaxBg.style.transform =
+        `translate3d(${translateX}px, ${translateY}px, 0) scale(1.05)`;
     }, { passive: true });
   }
 
-  // TOUCH / SWIPE (simple; no tilt here to keep it calm on mobile)
+  // TOUCH / SWIPE (simple)
   let touchStartX = 0;
   deck.addEventListener('touchstart', (e)=>{
     touchStartX = e.changedTouches[0].clientX;
@@ -215,20 +225,23 @@
   // NOTES
   function toggleNotes(){
     showNotes = !showNotes;
-    notesBtn.setAttribute('aria-pressed', String(showNotes));
+    if (notesBtn) notesBtn.setAttribute('aria-pressed', String(showNotes));
+    if (!notesPanel) return;
     notesPanel.hidden = !showNotes;
-    if(showNotes){
+    if(showNotes && notesBody){
       notesBody.textContent = slides[idx].dataset.notes || 'No notes for this slide.';
     }
   }
 
-  notesBtn.addEventListener('click', toggleNotes);
+  if (notesBtn) notesBtn.addEventListener('click', toggleNotes);
 
-  closeNotes.addEventListener('click', ()=>{
-    showNotes = false;
-    notesBtn.setAttribute('aria-pressed', 'false');
-    notesPanel.hidden = true;
-  });
+  if (closeNotes) {
+    closeNotes.addEventListener('click', ()=>{
+      showNotes = false;
+      if (notesBtn) notesBtn.setAttribute('aria-pressed', 'false');
+      if (notesPanel) notesPanel.hidden = true;
+    });
+  }
 
   // OVERVIEW CLICK TO SELECT SLIDE
   slides.forEach((s, i)=>{
@@ -236,7 +249,7 @@
       if(overview){
         overview = false;
         document.body.classList.remove('overview');
-        overviewBtn.setAttribute('aria-pressed', 'false');
+        if (overviewBtn) overviewBtn.setAttribute('aria-pressed', 'false');
         goto(i);
       }
     });
