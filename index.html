@@ -28,18 +28,102 @@
       <button id="nextBtn" class="btn" aria-label="Next slide" title="Next (→, Space, PageDown)">→</button>
       <button id="overviewBtn" class="btn" aria-pressed="false" aria-label="Toggle slide overview" title="Overview (O)">Overview</button>
       <button id="notesBtn" class="btn" aria-pressed="false" aria-label="Toggle presenter notes" title="Notes (N)">Notes</button>
+
+      <!-- Depth preset controls -->
+      <div class="depth-toggle" role="group" aria-label="Depth presets">
+        <button class="btn depth-btn" data-depth="subtle" aria-pressed="false">Depth: Subtle</button>
+        <button class="btn depth-btn" data-depth="medium" aria-pressed="false">Medium</button>
+        <button class="btn depth-btn" data-depth="deep" aria-pressed="true">Deep</button>
+      </div>
     </nav>
   </header>
 
   <main id="deck" class="deck" role="main" tabindex="-1">
-    <!-- Mid-ground parallax cheesecake image + glow
-         Swap the number/version in this raw URL when you update the art -->
-    <div class="parallax-bg" id="parallaxBg" aria-hidden="true">
-      <img
-        src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Cheescake1MG.png"
-        alt="Cheesecake Midground"
-        id="bgImage"
-      />
+    <!-- Multi-layer parallax stack (behind the slides) -->
+    <!-- Swap filenames in src URLs to change art later -->
+    <div class="parallax-group" id="parallaxGroup" aria-hidden="true">
+      <!-- Far background -->
+      <div class="parallax-layer layer-bg1" data-depth="0.12">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/bg1.png"
+          alt=""
+        />
+      </div>
+
+      <!-- Deep mid-background (soft cheesecake scatter) -->
+      <div class="parallax-layer layer-3" data-depth="0.22">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/layer3.png"
+          alt=""
+        />
+      </div>
+
+      <!-- Mid layer (sharper cheesecake scatter) -->
+      <div class="parallax-layer layer-2" data-depth="0.35">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Layer2.png"
+          alt=""
+        />
+      </div>
+
+      <!-- Main focal cheesecake -->
+      <div class="parallax-layer layer-main" data-depth="0.55">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/Cheescake1MG.png"
+          alt="Cheesecake"
+        />
+      </div>
+
+      <!-- Floating ingredient objects – replace the filenames/paths with your own raw URLs -->
+
+      <div class="parallax-layer obj-raspberry" data-depth="0.80">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/raspberry.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-blueberry" data-depth="0.90">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/blueberry.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-sauce" data-depth="0.65">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/berry_sauce_splash.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-sugar-swoosh" data-depth="0.50">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/sugar_swoosh.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-crumb-explosion" data-depth="0.40">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/brown_sugar_blast.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-drip" data-depth="0.70">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/cream_drip.png"
+          alt=""
+        />
+      </div>
+
+      <div class="parallax-layer obj-slice" data-depth="0.60">
+        <img
+          src="https://raw.githubusercontent.com/LorneH12/FiveMinutePresentation/main/cheesecake_slice.png"
+          alt=""
+        />
+      </div>
     </div>
 
     <!-- 12 slides. Edit content freely; keep data-title and data-notes for features. -->
