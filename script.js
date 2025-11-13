@@ -1,229 +1,233 @@
-// ------------- SLIDE SETUP -------------
+// ---- SAFETY HELPERS ----
+function $(selector, scope = document) {
+  return scope.querySelector(selector);
+}
+function $all(selector, scope = document) {
+  return Array.from(scope.querySelectorAll(selector));
+}
 
-const slides = Array.from(document.querySelectorAll(".slide"));
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const slideDotsContainer = document.getElementById("slideDots");
+// ---- SLIDE LOGIC ----
+const slides = $all(".slide");
+const viewport = $("#slidesViewport");
+const prevBtn = $("#prevSlideBtn");
+const nextBtn = $("#nextSlideBtn");
+const dotsContainer = $("#slideDots");
 
-let currentSlideIndex = 0;
+let currentIndex = 0;
+const totalSlides = slides.length;
 
 // build dots
-slides.forEach((_, index) => {
-  const dot = document.createElement("button");
-  dot.className = "slide-dot";
-  dot.type = "button";
-  dot.dataset.index = String(index);
-  slideDotsContainer.appendChild(dot);
-});
-
-const dots = Array.from(document.querySelectorAll(".slide-dot"));
-
-function layoutSlides() {
+if (dotsContainer && totalSlides > 0) {
   slides.forEach((slide, index) => {
-    const offset = index - currentSlideIndex; // -1, 0, 1, ...
+    const dot = document.createElement("button");
+    dot.className = "slide-dot" + (index === 0 ? " is-active" : "");
+    dot.setAttribute("type", "button");
+    dot.dataset.index = String(index);
+    dotsContainer.appendChild(dot);
+  });
+}
+
+const dots = $all(".slide-dot");
+
+function updateSlides() {
+  slides.forEach((slide, index) => {
+    const offset = index - currentIndex;
     slide.style.setProperty("--slide-offset", offset);
-    slide.classList.toggle("is-active", index === currentSlideIndex);
-    slide.classList.toggle("is-far", Math.abs(offset) > 1);
+
+    if (index === currentIndex) {
+      slide.classList.add("is-active");
+      slide.classList.remove("is-far");
+    } else {
+      slide.classList.remove("is-active");
+      // fade distant slides a bit more
+      if (Math.abs(offset) > 1) {
+        slide.classList.add("is-far");
+      } else {
+        slide.classList.remove("is-far");
+      }
+    }
   });
 
   dots.forEach((dot, index) => {
-    dot.classList.toggle("is-active", index === currentSlideIndex);
+    if (index === currentIndex) {
+      dot.classList.add("is-active");
+    } else {
+      dot.classList.remove("is-active");
+    }
   });
 
-  // update hash (1-based)
-  const hashIndex = currentSlideIndex + 1;
-  if (location.hash !== `#${hashIndex}`) {
-    history.replaceState(null, "", `#${hashIndex}`);
-  }
-
-  // nudge parallax so slide move is visible
-  applyParallax(lastMouseXRatio, lastMouseYRatio);
+  applyParallax();
 }
 
-function goToSlide(newIndex) {
-  if (newIndex < 0 || newIndex >= slides.length) return;
-  currentSlideIndex = newIndex;
-  layoutSlides();
+function goToSlide(index) {
+  if (!totalSlides) return;
+  const clamped =
+    ((index % totalSlides) + totalSlides) % totalSlides; // wrap safely
+  currentIndex = clamped;
+  updateSlides();
 }
 
-// initial index from hash
-(function initFromHash() {
-  const hash = location.hash.replace("#", "");
-  const asNum = Number(hash);
-  if (!Number.isNaN(asNum) && asNum >= 1 && asNum <= slides.length) {
-    currentSlideIndex = asNum - 1;
-  }
-})();
+// initial state
+if (totalSlides) {
+  updateSlides();
+}
 
-layoutSlides();
+// button events
+if (prevBtn) {
+  prevBtn.addEventListener("click", () => goToSlide(currentIndex - 1));
+}
+if (nextBtn) {
+  nextBtn.addEventListener("click", () => goToSlide(currentIndex + 1));
+}
 
-// nav buttons
-prevBtn.addEventListener("click", () => {
-  goToSlide(currentSlideIndex - 1);
-});
-
-nextBtn.addEventListener("click", () => {
-  goToSlide(currentSlideIndex + 1);
-});
-
-// dots click
+// dot click events
 dots.forEach((dot) => {
   dot.addEventListener("click", () => {
-    const index = Number(dot.dataset.index || "0");
-    goToSlide(index);
+    const idx = parseInt(dot.dataset.index || "0", 10);
+    goToSlide(idx);
   });
 });
 
-// keyboard navigation
-window.addEventListener("keydown", (event) => {
-  if (event.key === "ArrowRight") {
-    goToSlide(currentSlideIndex + 1);
-  } else if (event.key === "ArrowLeft") {
-    goToSlide(currentSlideIndex - 1);
+// keyboard
+document.addEventListener("keydown", (evt) => {
+  if (evt.key === "ArrowRight") {
+    goToSlide(currentIndex + 1);
+  } else if (evt.key === "ArrowLeft") {
+    goToSlide(currentIndex - 1);
   }
 });
 
-// ------------- PARALLAX ENGINE -------------
+// basic touch swipe for mobile
+let touchStartX = null;
 
-const parallaxLayers = Array.from(
-  document.querySelectorAll(".parallax-layer")
-);
+viewport &&
+  viewport.addEventListener(
+    "touchstart",
+    (evt) => {
+      const t = evt.touches[0];
+      touchStartX = t.clientX;
+    },
+    { passive: true }
+  );
 
-let parallaxStrengthX = 40; // mouse based
-let parallaxStrengthY = 25;
+viewport &&
+  viewport.addEventListener(
+    "touchend",
+    (evt) => {
+      if (touchStartX === null) return;
+      const t = evt.changedTouches[0];
+      const dx = t.clientX - touchStartX;
+      const threshold = 50; // px
+      if (dx > threshold) {
+        goToSlide(currentIndex - 1);
+      } else if (dx < -threshold) {
+        goToSlide(currentIndex + 1);
+      }
+      touchStartX = null;
+    },
+    { passive: true }
+  );
 
-const slideParallaxShift = 140; // pixels per slide at depth 1.0
-
-let lastMouseXRatio = 0.5;
-let lastMouseYRatio = 0.5;
-
-function applyParallax(mouseXRatio, mouseYRatio) {
-  lastMouseXRatio = mouseXRatio;
-  lastMouseYRatio = mouseYRatio;
-
-  parallaxLayers.forEach((layer) => {
-    const depth = parseFloat(layer.dataset.depth || "0");
-    const mouseOffsetX = (mouseXRatio - 0.5) * parallaxStrengthX * depth;
-    const mouseOffsetY = (mouseYRatio - 0.5) * parallaxStrengthY * depth;
-    const slideOffsetX = currentSlideIndex * slideParallaxShift * depth;
-
-    const x = mouseOffsetX + slideOffsetX;
-    const y = mouseOffsetY;
-
-    layer.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-  });
-}
-
-// mouse move
-window.addEventListener("mousemove", (event) => {
-  const w = window.innerWidth || 1;
-  const h = window.innerHeight || 1;
-  const xRatio = event.clientX / w;
-  const yRatio = event.clientY / h;
-  applyParallax(xRatio, yRatio);
-});
-
-// set initial state
-applyParallax(0.5, 0.5);
-
-// ------------- PRESETS & BLUR CONTROLS -------------
-
+// ---- PARALLAX / BLUR LOGIC ----
 const rootStyle = document.documentElement.style;
-const presetButtons = Array.from(document.querySelectorAll(".preset-btn"));
+const parallaxLayers = $all(".parallax-layer");
 
-const blurBgInput = document.getElementById("blurBg");
-const blurLayer3Input = document.getElementById("blurLayer3");
-const blurLayer2Input = document.getElementById("blurLayer2");
-const blurMainInput = document.getElementById("blurMain");
+// preset buttons
+const presetButtons = $all(".preset-btn");
 
-const presets = {
-  subtle: {
-    strengthX: 25,
-    strengthY: 18,
-    blurBg1: 1.5,
-    blurLayer3: 2,
-    blurLayer2: 1.2,
-    blurMain: 0
-  },
-  medium: {
-    strengthX: 40,
-    strengthY: 25,
-    blurBg1: 2.5,
-    blurLayer3: 3,
-    blurLayer2: 1.6,
-    blurMain: 0
-  },
-  deep: {
-    strengthX: 60,
-    strengthY: 32,
-    blurBg1: 4,
-    blurLayer3: 4.5,
-    blurLayer2: 2.2,
-    blurMain: 0.4
+// blur sliders
+const blurBg = $("#blurBg");
+const blurMid1 = $("#blurMid1");
+const blurMid2 = $("#blurMid2");
+const blurFore = $("#blurFore");
+
+// apply blur from sliders
+function syncBlurFromSliders() {
+  if (blurBg) rootStyle.setProperty("--blur-bg1", blurBg.value + "px");
+  if (blurMid1) rootStyle.setProperty("--blur-layer3", blurMid1.value + "px");
+  if (blurMid2) rootStyle.setProperty("--blur-layer2", blurMid2.value + "px");
+  if (blurFore) rootStyle.setProperty("--blur-main", blurFore.value + "px");
+}
+
+[blurBg, blurMid1, blurMid2, blurFore].forEach((input) => {
+  if (!input) return;
+  input.addEventListener("input", syncBlurFromSliders);
+});
+
+syncBlurFromSliders();
+
+// presets
+function applyPreset(name) {
+  presetButtons.forEach((btn) =>
+    btn.classList.toggle("is-active", btn.dataset.preset === name)
+  );
+
+  if (name === "subtle") {
+    if (blurBg) blurBg.value = "1.5";
+    if (blurMid1) blurMid1.value = "2.0";
+    if (blurMid2) blurMid2.value = "1.0";
+    if (blurFore) blurFore.value = "0";
+  } else if (name === "medium") {
+    if (blurBg) blurBg.value = "2.5";
+    if (blurMid1) blurMid1.value = "3.0";
+    if (blurMid2) blurMid2.value = "1.8";
+    if (blurFore) blurFore.value = "0.25";
+  } else if (name === "deep") {
+    if (blurBg) blurBg.value = "3.5";
+    if (blurMid1) blurMid1.value = "4.0";
+    if (blurMid2) blurMid2.value = "2.5";
+    if (blurFore) blurFore.value = "0.5";
   }
-};
 
-function applyBlurVars({
-  blurBg1,
-  blurLayer3,
-  blurLayer2,
-  blurMain
-}) {
-  rootStyle.setProperty("--blur-bg1", `${blurBg1}px`);
-  rootStyle.setProperty("--blur-layer3", `${blurLayer3}px`);
-  rootStyle.setProperty("--blur-layer2", `${blurLayer2}px`);
-  rootStyle.setProperty("--blur-main", `${blurMain}px`);
-
-  // sync sliders
-  blurBgInput.value = String(blurBg1);
-  blurLayer3Input.value = String(blurLayer3);
-  blurLayer2Input.value = String(blurLayer2);
-  blurMainInput.value = String(blurMain);
+  syncBlurFromSliders();
+  applyParallax();
 }
 
-function activatePreset(name) {
-  const preset = presets[name];
-  if (!preset) return;
-
-  parallaxStrengthX = preset.strengthX;
-  parallaxStrengthY = preset.strengthY;
-  applyBlurVars(preset);
-
-  presetButtons.forEach((btn) => {
-    btn.classList.toggle("is-active", btn.dataset.preset === name);
-  });
-
-  // re-apply parallax with new strengths
-  applyParallax(lastMouseXRatio, lastMouseYRatio);
-}
-
-// preset button events
 presetButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
-    const presetName = btn.dataset.preset;
-    activatePreset(presetName);
+    const name = btn.dataset.preset || "medium";
+    applyPreset(name);
   });
 });
 
-// slider events – fine tuning per layer
-function handleBlurInput() {
-  const bg = Number(blurBgInput.value || "0");
-  const l3 = Number(blurLayer3Input.value || "0");
-  const l2 = Number(blurLayer2Input.value || "0");
-  const main = Number(blurMainInput.value || "0");
+// horizontal parallax tied to slide index and pointer movement
+let pointerOffsetX = 0;
+let pointerOffsetY = 0;
 
-  rootStyle.setProperty("--blur-bg1", `${bg}px`);
-  rootStyle.setProperty("--blur-layer3", `${l3}px`);
-  rootStyle.setProperty("--blur-layer2", `${l2}px`);
-  rootStyle.setProperty("--blur-main", `${main}px`);
+function applyParallax() {
+  if (!parallaxLayers.length) return;
+
+  const progress =
+    totalSlides > 1 ? currentIndex / (totalSlides - 1) : 0.5; // 0 → 1
+
+  parallaxLayers.forEach((layer) => {
+    const depth = parseFloat(layer.dataset.depth || "0.5");
+    const baseX = (progress - 0.5) * depth * 60; // slide-based
+    const pointerX = pointerOffsetX * depth * 20;
+    const pointerY = pointerOffsetY * depth * 16;
+
+    const translateX = baseX + pointerX;
+    const translateY = pointerY;
+
+    layer.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(1.02)`;
+  });
 }
 
-[blurBgInput, blurLayer3Input, blurLayer2Input, blurMainInput].forEach(
-  (input) => {
-    input.addEventListener("input", handleBlurInput);
-  }
-);
+// pointer-based parallax (desktop)
+const parallaxRoot = $("#parallaxRoot");
+if (parallaxRoot) {
+  parallaxRoot.addEventListener("pointermove", (evt) => {
+    const rect = parallaxRoot.getBoundingClientRect();
+    const x = (evt.clientX - rect.left) / rect.width; // 0–1
+    const y = (evt.clientY - rect.top) / rect.height;
+    pointerOffsetX = x - 0.5;
+    pointerOffsetY = y - 0.5;
+    applyParallax();
+  });
+}
 
-// initialize to "deep 3D" by default if you want strong depth,
-// or switch to "medium" / "subtle" here.
-activatePreset("deep");
+// update on resize just in case
+window.addEventListener("resize", applyParallax);
+
+// initial parallax
+applyParallax();
